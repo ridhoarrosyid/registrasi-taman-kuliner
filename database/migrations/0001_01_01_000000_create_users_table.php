@@ -15,10 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
+            $table->string('password')->nullable(); // Nullable untuk Google OAuth
+            $table->string('google_id')->nullable();
+
+            // Kolom tambahan untuk BPU
+            $table->string('ktp_number')->nullable();
+            $table->string('ktp_image')->nullable();
+            $table->enum('role', ['admin', 'tenant'])->default('tenant');
+
+            $table->timestamps(); // create_at & updated_at
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
