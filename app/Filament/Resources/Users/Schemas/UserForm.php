@@ -31,13 +31,14 @@ class UserForm
                             ])
                             ->required()
                             ->native(false),
-                    ])->columns(2),
+                    ])->columns(2)
+                    ->columnSpanFull(),
 
                 Section::make('Data Identitas')
                     ->schema([
                         TextInput::make('ktp_number')->label('Nomor KTP')->maxLength(16),
                         FileUpload::make('ktp_image')->label('Foto KTP')->image()->directory('ktp-images'),
-                    ])->columns(2),
+                    ])->columns(2)->columnSpanFull(),
             ]);
     }
 }
