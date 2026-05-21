@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Slots\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
@@ -15,15 +16,21 @@ class SlotsTable
         return $table
             ->columns([
                 TextColumn::make('slot_number')
-                    ->searchable(),
+                    ->label('Nomor Lapak')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('status')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'available' => 'success',
+                        'reserved' => 'warning',
+                        'occupied' => 'danger',
+                    }),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Dibuat Pada')
+                    ->date()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -32,6 +39,7 @@ class SlotsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                DeleteAction::make()
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
