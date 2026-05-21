@@ -2,10 +2,14 @@
 
 namespace App\Filament\Resources\Rents\Tables;
 
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -15,35 +19,35 @@ class RentsTable
     {
         return $table
             ->columns([
-                TextColumn::make('user_id')
-                    ->numeric()
+                TextColumn::make('user.name')
+                    ->label('Pemilik')
+                    ->searchable()
                     ->sortable(),
-                TextColumn::make('slot_id')
-                    ->numeric()
-                    ->sortable(),
+
+                TextColumn::make('slot.slot_number')
+                    ->label('Lapak')
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('info'),
+
                 TextColumn::make('business_name')
+                    ->label('Nama Usaha')
                     ->searchable(),
+
                 TextColumn::make('status')
-                    ->searchable(),
-                TextColumn::make('reserved_until')
-                    ->dateTime()
-                    ->sortable(),
-                TextColumn::make('start_date')
-                    ->date()
-                    ->sortable(),
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'pending_payment', 'payment_failed' => 'gray',
+                        'pending_verification', 'renewal_pending_verification' => 'warning',
+                        'active' => 'success',
+                        'rejected', 'expired' => 'danger',
+                    }),
+
                 TextColumn::make('end_date')
-                    ->date()
+                    ->label('Berakhir Pada')
+                    ->date('d M Y')
                     ->sortable(),
-                TextColumn::make('qr_code')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 //
@@ -51,6 +55,7 @@ class RentsTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

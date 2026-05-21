@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Rents\Schemas;
 
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class RentInfolist
@@ -11,28 +12,42 @@ class RentInfolist
     {
         return $schema
             ->components([
-                TextEntry::make('user_id')
-                    ->numeric(),
-                TextEntry::make('slot_id')
-                    ->numeric(),
-                TextEntry::make('business_name'),
-                TextEntry::make('status'),
-                TextEntry::make('reserved_until')
-                    ->dateTime(),
-                TextEntry::make('start_date')
-                    ->date()
-                    ->placeholder('-'),
-                TextEntry::make('end_date')
-                    ->date()
-                    ->placeholder('-'),
-                TextEntry::make('qr_code')
-                    ->placeholder('-'),
-                TextEntry::make('created_at')
-                    ->dateTime()
-                    ->placeholder('-'),
-                TextEntry::make('updated_at')
-                    ->dateTime()
-                    ->placeholder('-'),
+                Section::make('Detail Penyewaan')
+                    ->schema([
+                        TextEntry::make('user.name')
+                            ->label('Pemilik')
+                            ->icon('heroicon-m-user'),
+
+                        TextEntry::make('slot.slot_number')
+                            ->label('Nomor Lapak')
+                            ->icon('heroicon-m-map-pin'),
+
+                        TextEntry::make('business_name')
+                            ->label('Nama Usaha')
+                            ->icon('heroicon-m-building-storefront'),
+
+                        TextEntry::make('status')
+                            ->badge()
+                            ->color(fn(string $state): string => match ($state) {
+                                'pending_payment', 'payment_failed' => 'gray',
+                                'pending_verification', 'renewal_pending_verification' => 'warning',
+                                'active' => 'success',
+                                'rejected', 'expired' => 'danger',
+                            }),
+                    ])->columns(2),
+
+                Section::make('Periode Sewa')
+                    ->schema([
+                        TextEntry::make('reserved_until')
+                            ->label('Batas Reservasi')
+                            ->dateTime('d M Y, H:i'),
+                        TextEntry::make('start_date')
+                            ->label('Mulai')
+                            ->date('d M Y'),
+                        TextEntry::make('end_date')
+                            ->label('Berakhir')
+                            ->date('d M Y'),
+                    ])->columns(3),
             ]);
     }
 }
