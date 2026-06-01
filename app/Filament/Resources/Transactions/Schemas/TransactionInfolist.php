@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Transactions\Schemas;
 
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 
@@ -15,8 +16,12 @@ class TransactionInfolist
                     ->numeric(),
                 TextEntry::make('amount')
                     ->numeric(),
-                TextEntry::make('payment_proof')
-                    ->placeholder('-'),
+                ImageEntry::make('payment_proof')
+                    ->label('Bukti Pembayaran')
+                    ->disk('public') // Pastikan disk diarahkan ke public (storage/app/public)
+                    ->visibility('public')
+                    ->height(400) // Buat ukurannya cukup besar agar admin mudah memverifikasi angka di struk
+                    ->columnSpanFull(),
                 TextEntry::make('status'),
                 TextEntry::make('created_at')
                     ->dateTime()
