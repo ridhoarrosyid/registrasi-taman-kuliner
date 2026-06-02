@@ -1,12 +1,13 @@
 <?php
 
-use Livewire\Component;
-use App\Models\Slot;
 use App\Models\Rent;
-use Illuminate\Support\Facades\DB;
+use App\Models\Slot;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
-new class extends Component {
+new class extends Component
+{
     // State (Variabel) untuk mengontrol UI
     public $activeTab;
     public $showModal = false;
@@ -98,10 +99,15 @@ new class extends Component {
             'availableBlocks' => $groupedSlots->keys(),
         ];
     }
+
+    public function render()
+    {
+        return $this->view()->layout('layouts::app')->title('Pilih Lapak | Taman Kuliner');
+    }
 };
 ?>
 
-<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 h-[1000px]" x-data="{ activeTab: '{{ $activeTab }}' }">
 
     @if (session()->has('success'))
     <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-semibold text-center shadow-sm">
@@ -129,9 +135,9 @@ new class extends Component {
     <div class="flex justify-center flex-wrap gap-2 mb-8 border-b border-gray-200 pb-6">
         @foreach($availableBlocks as $block)
         <button
-            wire:click="$set('activeTab', '{{ $block }}')"
-            class="px-6 py-2.5 rounded-full font-bold text-sm md:text-base transition-all duration-200 
-                {{ $activeTab === $block ? 'bg-indigo-600 text-white shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200' }}">
+            @click="activeTab = '{{ $block }}'"
+            :class="activeTab === '{{ $block }}' ? 'bg-indigo-600 text-white shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'"
+            class="px-6 py-2.5 rounded-full font-bold text-sm md:text-base transition-all duration-200">
             Blok {{ $block }}
         </button>
         @endforeach
@@ -139,13 +145,13 @@ new class extends Component {
 
     <div class="relative min-h-[300px]">
         @foreach($groupedSlots as $block => $slotsInBlock)
-        @if($activeTab === $block)
-        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+
+        <div x-show="activeTab === '{{ $block }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
             @foreach($slotsInBlock as $slot)
             <div
-                @class([ 'relative p-3 rounded-xl border-2 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
-                'border-yellow-400 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
-                'border-red-500 bg-red-50 opacity-50 cursor-not-allowed' => $slot->status === 'occupied',
+                @class([ 'relative p-3 rounded-xl border-4 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
+                'border-yellow-700 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
+                'border-red-700 bg-red-50 opacity-50 cursor-not-allowed' => $slot->status === 'occupied',
                 ])
                 @if($slot->status === 'available')
                 wire:click="selectSlot({{ $slot->id }})"
@@ -157,7 +163,7 @@ new class extends Component {
             </div>
             @endforeach
         </div>
-        @endif
+
         @endforeach
     </div>
 

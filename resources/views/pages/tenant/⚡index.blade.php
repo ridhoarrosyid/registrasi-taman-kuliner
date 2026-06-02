@@ -88,6 +88,11 @@ new class extends Component
             'rents' => $rents
         ];
     }
+
+    public function render()
+    {
+        return $this->view()->layout('layouts::app')->title('Dasbor Tenant - Wajah Digital untuk Bisnis Profesional');
+    }
 };
 ?>
 
@@ -111,29 +116,62 @@ new class extends Component
 
     <div class="space-y-6">
         @forelse($rents as $rent)
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-500 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
 
             <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="text-3xl font-black text-indigo-600">{{ $rent->slot->slot_number }}</span>
+                <div class="grid grid-cols-[140px_auto] sm:grid-cols-[160px_auto] gap-y-3 text-sm md:text-base items-center">
 
+                    <!-- Nama Bisnis -->
+                    <div class="text-gray-500 font-medium">Nama Bisnis</div>
+                    <div class="font-bold text-gray-900 truncate">
+                        <span class="mr-2">:</span> {{ $rent->business_name }}
+                    </div>
+
+                    <!-- Kode Tenant / Lapak -->
+                    <div class="text-gray-500 font-medium">Kode Lapak</div>
+                    <div class="font-black text-indigo-600 text-lg">
+                        <span class="mr-2 text-gray-900 font-normal text-base">:</span> {{ $rent->slot->slot_number }}
+                    </div>
+
+                    <!-- Status -->
+                    <div class="text-gray-500 font-medium">Status</div>
+                    <div class="font-bold flex items-center">
+                        <span class="mr-2 font-normal">:</span>
+                        @if($rent->status === 'pending_payment')
+                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-xs uppercase tracking-wider">Menunggu Pembayaran</span>
+                        @elseif($rent->status === 'pending_verification')
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-md text-xs uppercase tracking-wider">Verifikasi Admin</span>
+                        @elseif($rent->status === 'active')
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-md text-xs uppercase tracking-wider">Aktif Tersewa</span>
+                        @else
+                        <span class="bg-red-100 text-red-800 px-3 py-1 rounded-md text-xs uppercase tracking-wider">Gagal / Ditolak</span>
+                        @endif
+                    </div>
+
+                    <!-- Tanggal Mulai -->
+                    <div class="text-gray-500 font-medium">Tanggal Mulai</div>
+                    <div class="font-semibold text-gray-800">
+                        <span class="mr-2 font-normal">:</span>
+                        {{ $rent->start_date ? \Carbon\Carbon::parse($rent->start_date)->format('d M Y') : '-' }}
+                    </div>
+
+                    <!-- Tanggal Selesai -->
+                    <div class="text-gray-500 font-medium">Tanggal Selesai</div>
+                    <div class="font-semibold text-gray-800">
+                        <span class="mr-2 font-normal">:</span>
+                        {{ $rent->end_date ? \Carbon\Carbon::parse($rent->end_date)->format('d M Y') : '-' }}
+                    </div>
+
+                    <!-- Batas Bayar (Hanya Muncul Jika Belum Bayar) -->
                     @if($rent->status === 'pending_payment')
-                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Menunggu Pembayaran</span>
-                    @elseif($rent->status === 'pending_verification')
-                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Verifikasi Admin</span>
-                    @elseif($rent->status === 'active')
-                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Aktif Tersewa</span>
-                    @else
-                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Gagal / Ditolak</span>
+                    <div class="text-red-500 font-medium">Batas Bayar</div>
+                    <div class="font-bold text-red-600">
+                        <span class="mr-2 font-normal text-gray-900">:</span>
+                        {{ \Carbon\Carbon::parse($rent->reserved_until)->format('d M Y, H:i') }} WIB
+                    </div>
                     @endif
-                </div>
-                <h3 class="text-xl font-bold text-gray-800">{{ $rent->business_name }}</h3>
 
-                @if($rent->status === 'pending_payment')
-                <p class="text-sm text-red-500 font-medium mt-1">
-                    Batas Bayar: {{ \Carbon\Carbon::parse($rent->reserved_until)->format('d M Y, H:i') }} WIB
-                </p>
-                @endif
+                </div>
             </div>
 
             <div>
