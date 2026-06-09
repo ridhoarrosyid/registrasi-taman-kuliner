@@ -32,6 +32,11 @@ new class extends Component
             return redirect()->route('login');
         }
 
+        if (Auth::user()->role !== 'tenant') {
+            session()->flash('error', 'Akun Admin tidak dapat digunakan untuk memesan lapak. Silakan gunakan akun Tenant.');
+            return;
+        }
+
         $slot = Slot::find($slotId);
 
         if ($slot && $slot->status === 'available') {
@@ -97,6 +102,12 @@ new class extends Component
     @if (session()->has('success'))
     <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-semibold text-center shadow-sm">
         {{ session('success') }}
+    </div>
+    @endif
+
+    @if (session()->has('error'))
+    <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-xl font-semibold shadow-sm">
+        {{ session('error') }}
     </div>
     @endif
 

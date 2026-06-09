@@ -1,15 +1,25 @@
-<!DOCTYPE html>
-<html lang="id">
+<?php
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Masuk Tenant - Taman Kuliner BPU</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
+use Livewire\Component;
 
-<body class="bg-gray-50 flex items-center justify-center min-h-screen font-sans">
+new class extends Component
+{
+    //
+};
+?>
 
+<div class="flex justify-center items-center h-[calc(100vh-64px)]">
+    @if (session()->has('success'))
+    <div class="mb-6 p-4 bg-green-100 border border-green-200 text-green-800 rounded-xl font-semibold text-sm">
+        {{ session('success') }}
+    </div>
+    @endif
+
+    @if (session()->has('error'))
+    <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-xl font-semibold text-sm">
+        {{ session('error') }}
+    </div>
+    @endif
     <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
         <h2 class="text-3xl font-black text-gray-800 mb-2">Portal Tenant</h2>
         <p class="text-gray-500 mb-8">Masuk untuk mengamankan lapak dan memantau status penyewaan Anda.</p>
@@ -28,7 +38,4 @@
             Hanya butuh satu kali klik, tanpa perlu menghafal kata sandi.
         </div>
     </div>
-
-</body>
-
-</html>
+</div>
