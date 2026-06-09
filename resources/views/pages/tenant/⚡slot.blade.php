@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\LayoutMap;
 use App\Models\Rent;
 use App\Models\Slot;
 use Illuminate\Support\Facades\Auth;
@@ -8,54 +9,46 @@ use Livewire\Component;
 
 new class extends Component
 {
-    // State (Variabel) untuk mengontrol UI
     public $activeTab;
-    public $showModal = false;
-
-    // State untuk Form Pendaftaran
     public $selectedSlot = null;
     public $businessName = '';
+    public $layoutMaps;
 
-    // Dijalankan pertama kali saat komponen dimuat
     public function mount()
     {
-        // Mengatur tab default ke abjad pertama yang tersedia di database
+        // 1. Ambil peta layout yang statusnya aktif
+        $this->layoutMaps = LayoutMap::where('is_active', true)->latest()->take(5)->get();
+
+        // 2. Set tab awal
         $firstSlot = Slot::orderBy('slot_number', 'asc')->first();
         if ($firstSlot) {
             $this->activeTab = strtoupper(substr($firstSlot->slot_number, 0, 1));
         }
     }
 
-    // Fungsi saat lapak warna hijau diklik
     public function selectSlot($slotId)
     {
-        // 1. Cek apakah user sudah login
         if (!Auth::check()) {
             return redirect()->route('login');
         }
 
         $slot = Slot::find($slotId);
 
-        // 2. Proteksi: pastikan lapak masih benar-benar available
         if ($slot && $slot->status === 'available') {
             $this->selectedSlot = $slot;
-            $this->showModal = true;
+            // Kita tidak memakai showModal lagi, langsung tampilkan di bawah
         }
     }
 
-    // Fungsi untuk menutup modal dan mereset form
-    public function closeModal()
+    public function cancelSelection()
     {
-        $this->showModal = false;
         $this->selectedSlot = null;
         $this->businessName = '';
         $this->resetValidation();
     }
 
-    // Fungsi memproses pesanan saat tombol "Pesan" ditekan
     public function submitRent()
     {
-        // Validasi input
         $this->validate([
             'businessName' => 'required|min:3|max:255',
         ], [
@@ -63,33 +56,25 @@ new class extends Component
             'businessName.min' => 'Nama usaha minimal 3 karakter.'
         ]);
 
-        // Gunakan DB Transaction agar eksekusi data aman
         DB::transaction(function () {
-            // 1. Buat data sewa (Rent)
             Rent::create([
                 'user_id' => Auth::id(),
                 'slot_id' => $this->selectedSlot->id,
                 'business_name' => $this->businessName,
                 'status' => 'pending_payment',
-                'reserved_until' => now()->addHours(24), // Batas waktu bayar 24 jam
+                'reserved_until' => now()->addHours(24),
             ]);
 
-            // 2. Ubah status lapak (Slot) menjadi reserved agar tidak bisa diklik orang lain
-            $this->selectedSlot->update([
-                'status' => 'reserved'
-            ]);
+            $this->selectedSlot->update(['status' => 'reserved']);
         });
 
-        $this->closeModal();
-        session()->flash('success', 'Berhasil! Lapak Anda telah diamankan. Silakan segera unggah bukti pembayaran.');
+        $this->cancelSelection();
+        session()->flash('success', 'Berhasil! Lapak Anda telah diamankan. Silakan segera unggah bukti pembayaran di Dasbor Tenant.');
     }
 
-    // Mengirim data ke bagian HTML
     public function with(): array
     {
         $slots = Slot::orderBy('slot_number', 'asc')->get();
-
-        // Mengelompokkan lapak berdasarkan huruf pertama (B, C, D, dst)
         $groupedSlots = $slots->groupBy(function ($slot) {
             return strtoupper(substr($slot->slot_number, 0, 1));
         });
@@ -102,12 +87,12 @@ new class extends Component
 
     public function render()
     {
-        return $this->view()->layout('layouts::app')->title('Pilih Lapak | Taman Kuliner');
+        return $this->view()->layout('layouts::app')->title('Pilih Tenant');
     }
 };
 ?>
 
-<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 h-[1000px]" x-data="{ activeTab: '{{ $activeTab }}' }">
+<div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8" x-data="{ activeTab: '{{ $activeTab }}' }">
 
     @if (session()->has('success'))
     <div class="mb-6 p-4 bg-green-100 text-green-800 rounded-lg font-semibold text-center shadow-sm">
@@ -117,8 +102,58 @@ new class extends Component
 
     <div class="mb-8 text-center">
         <h2 class="text-3xl font-bold text-gray-900">Denah Lapak Taman Kuliner</h2>
-        <p class="text-gray-500 mt-2">Pilih blok area, lalu klik lapak yang tersedia untuk melakukan pendaftaran.</p>
+        <p class="text-gray-500 mt-2">Perhatikan peta di bawah, lalu pilih lapak melalui pilihan kotak di bawahnya.</p>
     </div>
+
+    @if($layoutMaps->count() > 0)
+    <div class="mb-10 flex justify-center">
+        <div
+            x-data="{ 
+                    activeSlide: 0, 
+                    totalSlides: {{ $layoutMaps->count() }},
+                    next() { this.activeSlide = this.activeSlide === this.totalSlides - 1 ? 0 : this.activeSlide + 1 },
+                    prev() { this.activeSlide = this.activeSlide === 0 ? this.totalSlides - 1 : this.activeSlide - 1 }
+                }"
+            class="relative w-full max-w-4xl bg-white p-4 rounded-2xl shadow-sm border-2 border-gray-100">
+            <span class="absolute top-4 left-4 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full z-20">Peta Resmi</span>
+
+            <div class="relative w-full h-[300px] md:h-[500px] overflow-hidden rounded-xl">
+                @foreach($layoutMaps as $index => $map)
+                <div
+                    x-show="activeSlide === {{ $index }}"
+                    x-transition:enter="transition ease-out duration-500"
+                    x-transition:enter-start="opacity-0 transform translate-x-8"
+                    x-transition:enter-end="opacity-100 transform translate-x-0"
+                    class="absolute inset-0 flex items-center justify-center bg-gray-50">
+                    <img src="{{ Storage::url($map->image_path) }}" alt="Peta Taman Kuliner {{ $index + 1 }}" class="w-full h-full object-contain">
+                </div>
+                @endforeach
+            </div>
+
+            @if($layoutMaps->count() > 1)
+            <button @click="prev" class="absolute left-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-indigo-600 p-2.5 rounded-full shadow-lg z-20 transition transform hover:scale-110 border border-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+            </button>
+            <button @click="next" class="absolute right-6 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-indigo-600 p-2.5 rounded-full shadow-lg z-20 transition transform hover:scale-110 border border-gray-100">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
+
+            <div class="absolute bottom-8 left-0 right-0 flex justify-center gap-2 z-20">
+                @foreach($layoutMaps as $index => $map)
+                <button
+                    @click="activeSlide = {{ $index }}"
+                    :class="activeSlide === {{ $index }} ? 'bg-indigo-600 w-8' : 'bg-gray-300 hover:bg-indigo-400 w-2.5'"
+                    class="h-2.5 rounded-full transition-all duration-300 shadow-sm"></button>
+                @endforeach
+            </div>
+            @endif
+        </div>
+    </div>
+    @endif
 
     <div class="flex flex-wrap justify-center gap-4 md:gap-8 mb-8 text-sm font-medium bg-white py-3 px-6 rounded-full shadow-sm border border-gray-100">
         <div class="flex items-center gap-2">
@@ -145,68 +180,61 @@ new class extends Component
 
     <div class="relative min-h-[300px]">
         @foreach($groupedSlots as $block => $slotsInBlock)
-
-        <div x-show="activeTab === '{{ $block }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+        <div x-show="activeTab === '{{ $block }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 animate-fade-in">
             @foreach($slotsInBlock as $slot)
             <div
-                @class([ 'relative p-3 rounded-xl border-4 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
-                'border-yellow-700 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
-                'border-red-700 bg-red-50 opacity-50 cursor-not-allowed' => $slot->status === 'occupied',
+                @class([ 'relative p-3 rounded-xl border-2 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
+                'border-yellow-400 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
+                'border-red-500 bg-red-50 opacity-50 cursor-not-allowed' => $slot->status === 'occupied',
+                'ring-4 ring-indigo-300 transform scale-105 bg-green-500 text-white' => $selectedSlot && $selectedSlot->id === $slot->id, // Highlight lapak jika dipilih
                 ])
                 @if($slot->status === 'available')
                 wire:click="selectSlot({{ $slot->id }})"
                 @endif
                 >
-                <span class="block text-xl md:text-2xl font-black {{ $slot->status === 'available' ? 'text-green-700 group-hover:text-white' : 'text-gray-800' }}">
+                <span class="block text-xl md:text-2xl font-black {{ ($slot->status === 'available' && (!$selectedSlot || $selectedSlot->id !== $slot->id)) ? 'text-green-700 group-hover:text-white' : ($selectedSlot && $selectedSlot->id === $slot->id ? 'text-white' : 'text-gray-800') }}">
                     {{ $slot->slot_number }}
                 </span>
             </div>
             @endforeach
         </div>
-
         @endforeach
     </div>
 
-    @if($showModal && $selectedSlot)
-    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="bg-indigo-600 p-5 text-white flex justify-between items-center">
-                <h3 class="font-bold text-lg">Konfirmasi Sewa Lapak</h3>
-                <button wire:click="closeModal" class="text-indigo-200 hover:text-white transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
+    @if($selectedSlot)
+    <div class="mt-12 bg-white rounded-2xl shadow-xl border border-indigo-100 p-6 md:p-8 max-w-3xl mx-auto animate-fade-in">
+        <div class="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+            <div class="bg-indigo-100 p-4 rounded-xl text-indigo-600">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
             </div>
-
-            <div class="p-6">
-                <div class="mb-6 flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span class="text-gray-500 font-medium text-sm uppercase tracking-wide">Nomor Lapak Terpilih</span>
-                    <span class="text-4xl font-black text-indigo-600">{{ $selectedSlot->slot_number }}</span>
-                </div>
-
-                <form wire:submit.prevent="submitRent">
-                    <div class="mb-5">
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Nama Usaha / Bisnis Anda</label>
-                        <input
-                            type="text"
-                            wire:model="businessName"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 focus:outline-none transition-shadow"
-                            placeholder="Contoh: Kedai Kopi Senja">
-                        @error('businessName') <span class="text-red-500 text-sm mt-2 block font-medium">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div class="bg-amber-50 text-amber-800 text-sm p-4 rounded-xl mb-6 border border-amber-200">
-                        <strong>Perhatian:</strong> Setelah menekan tombol pesan, Anda memiliki waktu <b>24 Jam</b> untuk mengunggah bukti pembayaran di Dasbor Tenant. Lapak akan dilepas kembali jika melewati batas waktu.
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button type="button" wire:click="closeModal" class="w-1/2 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
-                        <button type="submit" class="w-1/2 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors">Pesan Sekarang</button>
-                    </div>
-                </form>
+            <div>
+                <h3 class="text-gray-500 font-bold uppercase tracking-wider text-sm">Lapak Terpilih</h3>
+                <div class="text-4xl font-black text-indigo-600">{{ $selectedSlot->slot_number }}</div>
             </div>
         </div>
+
+        <form wire:submit.prevent="submitRent">
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">Nama Usaha / Bisnis Anda</label>
+                <input
+                    type="text"
+                    wire:model="businessName"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 focus:outline-none transition-shadow"
+                    placeholder="Contoh: Kedai Kopi Senja">
+                @error('businessName') <span class="text-red-500 text-sm mt-2 block font-medium">{{ $message }}</span> @enderror
+            </div>
+
+            <div class="bg-amber-50 text-amber-800 text-sm p-4 rounded-xl mb-6 border border-amber-200">
+                <strong>Perhatian:</strong> Anda memiliki waktu <b>24 Jam</b> untuk mengunggah bukti pembayaran di Dasbor setelah menekan tombol pesan.
+            </div>
+
+            <div class="flex gap-4">
+                <button type="button" wire:click="cancelSelection" class="w-1/3 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
+                <button type="submit" class="w-2/3 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors">Konfirmasi Pesanan</button>
+            </div>
+        </form>
     </div>
     @endif
 </div>
