@@ -9,36 +9,30 @@ use Livewire\WithFileUploads;
 
 new class extends Component
 {
-    use WithFileUploads; // Trait sakti Livewire untuk upload file
+    use WithFileUploads;
 
-    // State form upload
+    // State form upload (Amount dihapus karena sudah di-hardcode 500rb)
     public $paymentProof;
-    public $amount;
     public $rentIdToPay = null;
 
-    // Fungsi membuka form bayar untuk lapak tertentu
     public function openPaymentForm($rentId)
     {
         $this->rentIdToPay = $rentId;
         $this->resetValidation();
     }
 
-    // Fungsi menutup form bayar
     public function cancelPayment()
     {
         $this->rentIdToPay = null;
-        $this->reset(['paymentProof', 'amount']);
+        $this->reset(['paymentProof']);
     }
 
-    // Fungsi utama: memproses unggahan bukti bayar
     public function submitPayment()
     {
-        // 1. Validasi input
+        // 1. Validasi input (Hanya bukti transfer, amount tidak perlu divalidasi lagi)
         $this->validate([
-            'amount' => 'required|numeric|min:10000',
-            'paymentProof' => 'required|image|max:2048', // Maksimal 2MB, format gambar
+            'paymentProof' => 'required|image|max:2048',
         ], [
-            'amount.required' => 'Nominal transfer wajib diisi.',
             'paymentProof.required' => 'Bukti pembayaran wajib diunggah.',
             'paymentProof.image' => 'File harus berupa gambar (JPG/PNG).',
             'paymentProof.max' => 'Ukuran gambar maksimal 2MB.',
@@ -60,9 +54,9 @@ new class extends Component
             // Buat record Transaksi
             Transaction::create([
                 'rent_id' => $rent->id,
-                'amount' => $this->amount,
+                'amount' => 500000, // Otomatis Rp 500.000
                 'payment_proof' => $imagePath,
-                'status' => 'pending', // Status menunggu validasi Admin BPU
+                'status' => 'pending',
             ]);
 
             // Ubah status Sewa
@@ -78,7 +72,6 @@ new class extends Component
 
     public function with(): array
     {
-        // Mengambil semua riwayat sewa milik tenant ini, urutkan dari yang terbaru
         $rents = Rent::where('user_id', Auth::id())
             ->with('slot')
             ->orderBy('created_at', 'desc')
@@ -121,19 +114,16 @@ new class extends Component
             <div class="flex-1">
                 <div class="grid grid-cols-[140px_auto] sm:grid-cols-[160px_auto] gap-y-3 text-sm md:text-base items-center">
 
-                    <!-- Nama Bisnis -->
                     <div class="text-gray-500 font-medium">Nama Bisnis</div>
                     <div class="font-bold text-gray-900 truncate">
                         <span class="mr-2">:</span> {{ $rent->business_name }}
                     </div>
 
-                    <!-- Kode Tenant / Lapak -->
                     <div class="text-gray-500 font-medium">Kode Lapak</div>
                     <div class="font-black text-indigo-600 text-lg">
                         <span class="mr-2 text-gray-900 font-normal text-base">:</span> {{ $rent->slot->slot_number }}
                     </div>
 
-                    <!-- Status -->
                     <div class="text-gray-500 font-medium">Status</div>
                     <div class="font-bold flex items-center">
                         <span class="mr-2 font-normal">:</span>
@@ -148,21 +138,18 @@ new class extends Component
                         @endif
                     </div>
 
-                    <!-- Tanggal Mulai -->
                     <div class="text-gray-500 font-medium">Tanggal Mulai</div>
                     <div class="font-semibold text-gray-800">
                         <span class="mr-2 font-normal">:</span>
                         {{ $rent->start_date ? \Carbon\Carbon::parse($rent->start_date)->format('d M Y') : '-' }}
                     </div>
 
-                    <!-- Tanggal Selesai -->
                     <div class="text-gray-500 font-medium">Tanggal Selesai</div>
                     <div class="font-semibold text-gray-800">
                         <span class="mr-2 font-normal">:</span>
                         {{ $rent->end_date ? \Carbon\Carbon::parse($rent->end_date)->format('d M Y') : '-' }}
                     </div>
 
-                    <!-- Batas Bayar (Hanya Muncul Jika Belum Bayar) -->
                     @if($rent->status === 'pending_payment')
                     <div class="text-red-500 font-medium">Batas Bayar</div>
                     <div class="font-bold text-red-600">
@@ -189,29 +176,54 @@ new class extends Component
 
         @if($rentIdToPay === $rent->id)
         <div class="bg-gray-50 rounded-2xl border-2 border-indigo-100 p-6 mt-[-10px] shadow-inner mb-6 animate-fade-in">
-            <form wire:submit.prevent="submitPayment" class="flex flex-col md:flex-row gap-6">
+            <form wire:submit.prevent="submitPayment" class="items-start flex flex-col md:flex-row gap-6">
 
                 <div class="flex-1">
                     <label class="block text-sm font-bold text-gray-700 mb-2">Nominal Transfer (Rp)</label>
-                    <input type="number" wire:model="amount" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-none" placeholder="Contoh: 150000">
-                    @error('amount') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                    <input
+                        type="text"
+                        value="500.000"
+                        disabled
+                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-600 font-bold cursor-not-allowed focus:outline-none select-none">
+                    <p class="text-xs text-gray-500 mt-1 font-medium">*Tarif sewa lapak sudah ditetapkan.</p>
                 </div>
 
                 <div class="flex-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Unggah Struk / Bukti Transfer</label>
-                    <input type="file" wire:model="paymentProof" accept="image/*" class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                    @error('paymentProof') <span class="text-red-500 text-sm mt-1 block">{{ $message }}</span> @enderror
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Unggah Bukti Transfer</label>
+                    <input
+                        type="file"
+                        wire:model="paymentProof"
+                        accept="image/*"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
 
-                    @if ($paymentProof)
-                    <div class="mt-3">
-                        <img src="{{ $paymentProof->temporaryUrl() }}" class="h-32 object-contain rounded-lg border shadow-sm">
+                    <div wire:loading wire:target="paymentProof" class="mt-3 text-sm text-indigo-600 font-bold flex items-center gap-2 animate-pulse">
+                        <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Sedang memproses gambar...
                     </div>
-                    @endif
+
+                    @error('paymentProof') <span class="text-red-500 text-sm mt-1 block font-medium">{{ $message }}</span> @enderror
+
+                    <div class="mt-4">
+                        @if ($paymentProof)
+                        <p class="text-xs text-amber-600 font-semibold mb-2 flex items-center gap-1">
+                            <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            Pratinjau Bukti:
+                        </p>
+                        <img src="{{ $paymentProof->temporaryUrl() }}" class="h-48 object-contain rounded-xl border-2 border-dashed border-indigo-400 p-1.5 bg-gray-50 shadow-sm">
+                        @endif
+                    </div>
                 </div>
 
                 <div class="flex items-end">
-                    <button type="submit" class="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md">
-                        Kirim Bukti
+                    <button type="submit"
+                        wire:loading.attr="disabled"
+                        wire:target="paymentProof, submitPayment"
+                        class="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <span wire:loading.remove wire:target="submitPayment">Kirim Bukti</span>
+                        <span wire:loading wire:target="submitPayment">Mengirim...</span>
                     </button>
                 </div>
             </form>
