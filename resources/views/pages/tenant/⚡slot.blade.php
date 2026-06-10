@@ -10,19 +10,32 @@ use Livewire\Component;
 
 new class extends Component
 {
-    public $activeTab; // Sekarang akan menyimpan ID dari SlotGroup (integer)
+    public $activeTab;
     public $selectedSlot = null;
     public $businessName = '';
     public $layoutMaps;
+
+    // Properti baru untuk mengecek batas limit
+    public $userRentCount = 0;
+    public $hasReachedLimit = false;
 
     public function mount()
     {
         $this->layoutMaps = LayoutMap::where('is_active', true)->latest()->take(5)->get();
 
-        // Mengambil Group pertama yang memiliki slot sebagai tab bawaan (default)
         $firstGroup = SlotGroup::whereHas('slots')->first();
         if ($firstGroup) {
             $this->activeTab = $firstGroup->id;
+        }
+
+        // Hitung lapak yang sudah dipesan oleh tenant (Status: pending_payment, pending_verification, atau active)
+        if (Auth::check() && Auth::user()->role === 'tenant') {
+            $this->userRentCount = Rent::where('user_id', Auth::id())
+                ->whereIn('status', ['pending_payment', 'pending_verification', 'active'])
+                ->count();
+
+            // Jika sudah 2 atau lebih, ubah status menjadi true
+            $this->hasReachedLimit = $this->userRentCount >= 2;
         }
     }
 
@@ -53,6 +66,12 @@ new class extends Component
 
     public function submitRent()
     {
+        // Perlindungan ganda di backend agar tidak bisa di-bypass
+        if ($this->hasReachedLimit) {
+            session()->flash('error', 'Anda telah mencapai batas maksimal penyewaan (2 lapak).');
+            return;
+        }
+
         $this->validate([
             'businessName' => 'required|min:3|max:255',
         ], [
@@ -71,6 +90,10 @@ new class extends Component
 
             $this->selectedSlot->update(['status' => 'reserved']);
         });
+
+        // Tambahkan hitungan secara real-time setelah sukses memesan
+        $this->userRentCount++;
+        $this->hasReachedLimit = $this->userRentCount >= 2;
 
         $this->cancelSelection();
         session()->flash('success', 'Berhasil! Lapak Anda telah diamankan. Silakan segera unggah bukti pembayaran di Dasbor Tenant.');
@@ -105,6 +128,15 @@ new class extends Component
     @if (session()->has('error'))
     <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-xl font-semibold shadow-sm">
         {{ session('error') }}
+    </div>
+    @endif
+
+    @if($hasReachedLimit)
+    <div class="mb-6 p-4 bg-amber-100 border border-amber-200 text-amber-800 rounded-xl font-bold flex flex-col md:flex-row items-center justify-center gap-3 shadow-sm animate-fade-in">
+        <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+        <span class="text-center md:text-left">Peringatan: Setiap pengguna hanya boleh menyewa maksimal 2 lapak. Anda telah mencapai batas tersebut.</span>
     </div>
     @endif
 
@@ -229,18 +261,30 @@ new class extends Component
                 <input
                     type="text"
                     wire:model="businessName"
-                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 focus:outline-none transition-shadow"
+                    @if($hasReachedLimit) disabled @endif
+                    class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 focus:outline-none transition-shadow disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="Contoh: Kedai Kopi Senja">
                 @error('businessName') <span class="text-red-500 text-sm mt-2 block font-medium">{{ $message }}</span> @enderror
             </div>
 
+            @if(!$hasReachedLimit)
             <div class="bg-amber-50 text-amber-800 text-sm p-4 rounded-xl mb-6 border border-amber-200">
                 <strong>Perhatian:</strong> Anda memiliki waktu <b>24 Jam</b> untuk mengunggah bukti pembayaran di Dasbor setelah menekan tombol pesan.
             </div>
+            @endif
 
             <div class="flex gap-4">
                 <button type="button" wire:click="cancelSelection" class="w-1/3 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors">Batal</button>
-                <button type="submit" class="w-2/3 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors">Konfirmasi Pesanan</button>
+
+                @if($hasReachedLimit)
+                <button type="button" disabled class="w-2/3 py-3 px-4 bg-gray-300 text-gray-500 font-bold rounded-xl cursor-not-allowed transition-colors">
+                    Maksimal 2 Lapak
+                </button>
+                @else
+                <button type="submit" class="w-2/3 py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 shadow-md shadow-indigo-200 transition-colors">
+                    Konfirmasi Pesanan
+                </button>
+                @endif
             </div>
         </form>
     </div>

@@ -119,6 +119,11 @@ new class extends Component
                         <span class="mr-2">:</span> {{ $rent->business_name }}
                     </div>
 
+                    <div class="text-gray-500 font-medium">Grup Lapak</div>
+                    <div class="font-black text-indigo-600 text-lg">
+                        <span class="mr-2 text-gray-900 font-normal text-base">:</span> {{ $rent->slot->slotGroup->name }}
+                    </div>
+
                     <div class="text-gray-500 font-medium">Kode Lapak</div>
                     <div class="font-black text-indigo-600 text-lg">
                         <span class="mr-2 text-gray-900 font-normal text-base">:</span> {{ $rent->slot->slot_number }}
@@ -163,7 +168,7 @@ new class extends Component
 
             <div>
                 @if($rent->status === 'pending_payment' && $rentIdToPay !== $rent->id)
-                <button wire:click="openPaymentForm({{ $rent->id }})" class="bg-gray-900 text-black px-6 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition shadow-md">
+                <button wire:click="openPaymentForm({{ $rent->id }})" class="bg-gray-50 text-black px-6 py-2.5 rounded-xl font-bold hover:bg-gray-100 transition shadow-md">
                     Bayar Sekarang
                 </button>
                 @elseif($rentIdToPay === $rent->id)
