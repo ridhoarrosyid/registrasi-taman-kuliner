@@ -20,7 +20,7 @@
                 <a href="/pilih-lapak" class="text-gray-600 hover:text-indigo-600 font-medium">Pilih Lapak</a>
                 <span class="text-gray-300">|</span>
                 @auth
-                <span class="text-gray-800 font-bold hidden md:inline-block">{{ Auth::user()->name }}</span>
+                <a href="/profile" class="text-gray-800 font-bold hidden md:inline-block">{{ Auth::user()->name }}</a>
 
                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                     @csrf
