@@ -17,4 +17,5 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::livewire('/profile', 'pages::tenant.profile')->middleware(['auth', IsTenant::class])->name('profile');
 
 Route::livewire('/dashboard', 'pages::tenant.index')->middleware(['auth', IsTenant::class])->name('user.dashboard');
+Route::livewire('/transaction/{id}', 'pages::tenant.transaction-detail')->middleware(['auth', IsTenant::class])->name('tenant.transaction.detail');
 Route::livewire('/pilih-lapak', 'pages::tenant.slot')->name('user.pilihTenant');

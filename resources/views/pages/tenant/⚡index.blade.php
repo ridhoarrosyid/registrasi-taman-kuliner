@@ -73,7 +73,10 @@ new class extends Component
     public function with(): array
     {
         $rents = Rent::where('user_id', Auth::id())
-            ->with('slot')
+            // Ikut ambil data slot dan riwayat transaksi, urutkan transaksi dari yang terbaru
+            ->with(['slot', 'transactions' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            }])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -164,6 +167,50 @@ new class extends Component
                     @endif
 
                 </div>
+                @if($rent->transactions->isNotEmpty())
+                <div class="mt-6 pt-6 border-t border-gray-100 w-full">
+                    <h4 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Riwayat Pembayaran
+                    </h4>
+                    <div class="grid grid-cols-1 gap-3">
+                        @foreach($rent->transactions as $trx)
+                        <a href="{{ route('tenant.transaction.detail', $trx->id) }}" class="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 transition-all duration-200 group shadow-sm">
+                            <div class="flex items-center gap-4 mb-3 sm:mb-0">
+                                <div class="p-2.5 bg-gray-100 rounded-lg text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-bold text-gray-800 group-hover:text-indigo-700 transition-colors">
+                                        {{ \Carbon\Carbon::parse($trx->created_at)->format('d M Y, H:i') }} WIB
+                                    </p>
+                                    <p class="text-xs text-gray-500 font-medium mt-0.5">Nominal: Rp {{ number_format($trx->amount, 0, ',', '.') }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between sm:justify-end gap-4">
+                                @if($trx->status === 'pending')
+                                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">Diproses</span>
+                                @elseif($trx->status === 'approved')
+                                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">Diterima</span>
+                                @else
+                                <span class="bg-red-100 text-red-800 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider">Ditolak</span>
+                                @endif
+
+                                <span class="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                    </svg>
+                                </span>
+                            </div>
+                        </a>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div>

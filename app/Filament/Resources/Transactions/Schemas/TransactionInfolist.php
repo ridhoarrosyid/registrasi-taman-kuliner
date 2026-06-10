@@ -27,8 +27,8 @@ class TransactionInfolist
                             ->badge() // Membuat status tampil sebagai kotak warna
                             ->color(fn(string $state): string => match ($state) {
                                 'pending' => 'warning',
-                                'approved' => 'success',
-                                'rejected' => 'danger',
+                                'success' => 'success',
+                                'failed' => 'danger',
                                 default => 'gray',
                             }),
 
