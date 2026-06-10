@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class TransactionsTable
@@ -20,6 +21,11 @@ class TransactionsTable
                     ->label('Nama Tenant')
                     ->searchable(),
 
+                TextColumn::make('rent.slot.slotGroup.name')
+                    ->label('Lapak')
+                    ->badge()
+                    ->color('info'),
+
                 TextColumn::make('rent.slot.slot_number')
                     ->label('Lapak')
                     ->badge()
@@ -31,6 +37,7 @@ class TransactionsTable
                     ->sortable(),
 
                 ImageColumn::make('payment_proof')
+                    ->disk('public')
                     ->label('Bukti Transfer'),
 
                 TextColumn::make('status')
@@ -42,7 +49,10 @@ class TransactionsTable
                     }),
             ])
             ->filters([
-                //
+                SelectFilter::make('rent_id')
+                    ->relationship('rent', 'business_name')
+                    ->label('Berdasarkan Penyewaan')
+                    ->searchable(),
             ])
             ->recordActions([
                 ViewAction::make(),

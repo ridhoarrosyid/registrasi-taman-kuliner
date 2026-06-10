@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Rents\Schemas;
 
+use App\Filament\Resources\Transactions\TransactionResource;
+use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -34,6 +36,17 @@ class RentInfolist
                                 'active' => 'success',
                                 'rejected', 'expired' => 'danger',
                             }),
+                        Action::make('lihat_bukti')
+                            ->label('Lihat Bukti Pembayaran')
+                            ->icon('heroicon-o-banknotes')
+                            ->color('info') // Warna biru agar kontras
+                            ->url(fn($record) => TransactionResource::getUrl('index', [
+                                // Ini adalah kunci ajaibnya: Menyuntikkan nilai filter ke URL
+                                'filters' => [
+                                    'rent_id' => ['value' => $record->id],
+                                ],
+                            ])),
+
                     ])->columns(2),
 
                 Section::make('Periode Sewa')
