@@ -189,7 +189,7 @@ new class extends Component
     <div class="relative min-h-[300px]">
         @foreach($slotGroups as $group)
         <div x-show="activeTab === '{{ $group->id }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 animate-fade-in">
-            @foreach($group->slots as $slot)
+            @foreach($group->slots->sortBy('slot_number', SORT_NATURAL) as $slot)
             <div
                 @class([ 'relative p-3 rounded-xl border-2 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
                 'border-yellow-400 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
