@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password')->nullable(); // Nullable untuk Google OAuth
             $table->string('google_id')->nullable();
+            $table->rememberToken();
 
             // Kolom tambahan untuk BPU
             $table->string('ktp_number')->nullable();

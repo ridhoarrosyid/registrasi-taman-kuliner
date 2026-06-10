@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('slots', function (Blueprint $table) {
+        Schema::create('slot_groups', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('slot_group_id')->nullable()->constrained('slot_groups')->cascadeOnDelete();
-            $table->string('slot_number'); // Misal: A1, B2
-            $table->enum('status', ['available', 'reserved', 'occupied'])->default('available');
+            $table->string('name'); // Contoh: "Blok A", "Blok B", "Area Kuliner Barat"
+            $table->string('slug')->unique();
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('slots');
+        Schema::dropIfExists('slot_groups');
     }
 };

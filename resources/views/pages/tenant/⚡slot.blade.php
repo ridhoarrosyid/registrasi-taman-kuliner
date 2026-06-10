@@ -3,26 +3,26 @@
 use App\Models\LayoutMap;
 use App\Models\Rent;
 use App\Models\Slot;
+use App\Models\SlotGroup;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 
 new class extends Component
 {
-    public $activeTab;
+    public $activeTab; // Sekarang akan menyimpan ID dari SlotGroup (integer)
     public $selectedSlot = null;
     public $businessName = '';
     public $layoutMaps;
 
     public function mount()
     {
-        // 1. Ambil peta layout yang statusnya aktif
         $this->layoutMaps = LayoutMap::where('is_active', true)->latest()->take(5)->get();
 
-        // 2. Set tab awal
-        $firstSlot = Slot::orderBy('slot_number', 'asc')->first();
-        if ($firstSlot) {
-            $this->activeTab = strtoupper(substr($firstSlot->slot_number, 0, 1));
+        // Mengambil Group pertama yang memiliki slot sebagai tab bawaan (default)
+        $firstGroup = SlotGroup::whereHas('slots')->first();
+        if ($firstGroup) {
+            $this->activeTab = $firstGroup->id;
         }
     }
 
@@ -33,15 +33,14 @@ new class extends Component
         }
 
         if (Auth::user()->role !== 'tenant') {
-            session()->flash('error', 'Akun Admin tidak dapat digunakan untuk memesan lapak. Silakan gunakan akun Tenant.');
+            session()->flash('error', 'Akun Admin tidak dapat digunakan untuk memesan lapak.');
             return;
         }
 
-        $slot = Slot::find($slotId);
+        $slot = Slot::with('slotGroup')->find($slotId);
 
         if ($slot && $slot->status === 'available') {
             $this->selectedSlot = $slot;
-            // Kita tidak memakai showModal lagi, langsung tampilkan di bawah
         }
     }
 
@@ -79,14 +78,12 @@ new class extends Component
 
     public function with(): array
     {
-        $slots = Slot::orderBy('slot_number', 'asc')->get();
-        $groupedSlots = $slots->groupBy(function ($slot) {
-            return strtoupper(substr($slot->slot_number, 0, 1));
-        });
+        $groups = SlotGroup::with(['slots' => function ($query) {
+            $query->orderBy('slot_number', 'asc');
+        }])->get();
 
         return [
-            'groupedSlots' => $groupedSlots,
-            'availableBlocks' => $groupedSlots->keys(),
+            'slotGroups' => $groups,
         ];
     }
 
@@ -179,25 +176,25 @@ new class extends Component
     </div>
 
     <div class="flex justify-center flex-wrap gap-2 mb-8 border-b border-gray-200 pb-6">
-        @foreach($availableBlocks as $block)
+        @foreach($slotGroups as $group)
         <button
-            @click="activeTab = '{{ $block }}'"
-            :class="activeTab === '{{ $block }}' ? 'bg-indigo-600 text-white shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'"
+            @click="activeTab = '{{ $group->id }}'"
+            :class="activeTab === '{{ $group->id }}' ? 'bg-indigo-600 text-white shadow-md transform scale-105' : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'"
             class="px-6 py-2.5 rounded-full font-bold text-sm md:text-base transition-all duration-200">
-            Blok {{ $block }}
+            {{ $group->name }}
         </button>
         @endforeach
     </div>
 
     <div class="relative min-h-[300px]">
-        @foreach($groupedSlots as $block => $slotsInBlock)
-        <div x-show="activeTab === '{{ $block }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 animate-fade-in">
-            @foreach($slotsInBlock as $slot)
+        @foreach($slotGroups as $group)
+        <div x-show="activeTab === '{{ $group->id }}'" style="display: none;" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4 animate-fade-in">
+            @foreach($group->slots as $slot)
             <div
                 @class([ 'relative p-3 rounded-xl border-2 text-center transition-all duration-200 flex flex-col items-center justify-center aspect-square' , 'border-green-500 bg-green-50 hover:bg-green-500 hover:text-white cursor-pointer shadow-sm hover:shadow-md group'=> $slot->status === 'available',
                 'border-yellow-400 bg-yellow-50 opacity-75 cursor-not-allowed' => $slot->status === 'reserved',
                 'border-red-500 bg-red-50 opacity-50 cursor-not-allowed' => $slot->status === 'occupied',
-                'ring-4 ring-indigo-300 transform scale-105 bg-green-500 text-white' => $selectedSlot && $selectedSlot->id === $slot->id, // Highlight lapak jika dipilih
+                'ring-4 ring-indigo-300 transform scale-105 bg-green-500 text-white' => $selectedSlot && $selectedSlot->id === $slot->id,
                 ])
                 @if($slot->status === 'available')
                 wire:click="selectSlot({{ $slot->id }})"

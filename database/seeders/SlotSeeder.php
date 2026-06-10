@@ -3,7 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Slot;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\SlotGroup;
+use Illuminate\Support\Str;
 use Illuminate\Database\Seeder;
 
 class SlotSeeder extends Seeder
@@ -13,26 +14,62 @@ class SlotSeeder extends Seeder
      */
     public function run(): void
     {
-        // Berdasarkan peta, kita generate beberapa data awal untuk testing
-        $blocks = [
-            'B' => 15, // Generate B1 sampai B15
-            'C' => 15, // Generate C1 sampai C15
-            'D' => 10,
-            'E' => 10,
-            'F' => 10,
+        // Definisi Struktur Lapak berdasarkan Blok
+        $struktur = [
+            'Blok A' => [
+                // Anda tidak menyebutkan rentang untuk Blok A, jadi sementara saya kosongkan.
+                // Jika ada, Anda bisa menambahkannya seperti format di bawah ini.
+            ],
+            'Blok B' => [
+                ['prefix' => 'b.', 'start' => 1, 'end' => 10],
+                ['prefix' => '', 'start' => 1, 'end' => 30],
+            ],
+            'Blok C' => [
+                ['prefix' => 'c.', 'start' => 1, 'end' => 10],
+                ['prefix' => '', 'start' => 1, 'end' => 31],
+            ],
+            'Blok D' => [
+                ['prefix' => 'd.', 'start' => 1, 'end' => 10],
+                ['prefix' => '', 'start' => 1, 'end' => 34],
+            ],
+            'Blok E' => [
+                ['prefix' => 'e.', 'start' => 1, 'end' => 10],
+                ['prefix' => '', 'start' => 1, 'end' => 34],
+            ],
+            'Blok F' => [
+                ['prefix' => 'f.', 'start' => 1, 'end' => 16],
+                ['prefix' => '', 'start' => 1, 'end' => 37],
+            ],
         ];
 
-        foreach ($blocks as $blockName => $count) {
-            for ($i = 1; $i <= $count; $i++) {
-                Slot::create([
-                    'slot_number' => $blockName . $i, // Menghasilkan "B1", "B2", dst.
-                    'status' => 'available',
-                ]);
+        foreach ($struktur as $namaBlok => $konfigurasi) {
+            // 1. Buat atau ambil Grup Slot
+            $group = SlotGroup::firstOrCreate(
+                ['slug' => Str::slug($namaBlok)],
+                ['name' => $namaBlok]
+            );
+
+            // 2. Siapkan Array untuk Insert massal agar jauh lebih cepat
+            $slotsToInsert = [];
+
+            foreach ($konfigurasi as $rentang) {
+                for ($i = $rentang['start']; $i <= $rentang['end']; $i++) {
+                    $slotsToInsert[] = [
+                        'slot_group_id' => $group->id,
+                        'slot_number'   => $rentang['prefix'] . $i,
+                        'status'        => 'available',
+                        'created_at'    => now(),
+                        'updated_at'    => now(),
+                    ];
+                }
+            }
+
+            // 3. Masukkan data lapak ke database
+            if (!empty($slotsToInsert)) {
+                Slot::insert($slotsToInsert);
             }
         }
 
-        // Tambahkan beberapa lapak dengan status berbeda untuk melihat warna UI
-        Slot::create(['slot_number' => 'B16', 'status' => 'reserved']);
-        Slot::create(['slot_number' => 'C16', 'status' => 'occupied']);
+        $this->command->info('Berhasil! Semua grup dan lapak telah berhasil dibuat.');
     }
 }

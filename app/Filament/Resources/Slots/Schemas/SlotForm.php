@@ -16,6 +16,12 @@ class SlotForm
                 Section::make('Detail Lapak')
                     ->description('Masukkan kode unik lapak dan status ketersediaannya.')
                     ->schema([
+                        Select::make('slot_group_id')
+                            ->relationship('slotGroup', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->label('Blok / Group Slot'),
                         TextInput::make('slot_number')
                             ->label('Nomor / Kode Lapak')
                             ->required()
