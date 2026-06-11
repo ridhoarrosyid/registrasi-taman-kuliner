@@ -31,7 +31,7 @@ new class extends Component
         // Hitung lapak yang sudah dipesan oleh tenant (Status: pending_payment, pending_verification, atau active)
         if (Auth::check() && Auth::user()->role === 'tenant') {
             $this->userRentCount = Rent::where('user_id', Auth::id())
-                ->whereIn('status', ['pending_payment', 'pending_verification', 'active'])
+                ->whereIn('status', ['pending_payment', 'pending_verification', 'active', 'renewal_pending_verification'])
                 ->count();
 
             // Jika sudah 2 atau lebih, ubah status menjadi true
