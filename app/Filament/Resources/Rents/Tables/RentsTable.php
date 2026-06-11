@@ -7,11 +7,15 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\ExportBulkAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
 
 class RentsTable
 {
@@ -21,6 +25,11 @@ class RentsTable
             ->columns([
                 TextColumn::make('user.name')
                     ->label('Pemilik')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('slot.slotGroup.name')
+                    ->label('Blok Tenant')
                     ->searchable()
                     ->sortable(),
 
@@ -49,9 +58,7 @@ class RentsTable
                     ->date('d M Y')
                     ->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
@@ -60,6 +67,15 @@ class RentsTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
+                    ExportBulkAction::make()
+                        ->label('Eksport ke Excel')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('success')
+                        ->exports([
+                            ExcelExport::make()
+                                ->fromTable()
+                                ->withFilename('Laporan_Penyewaan_BPU_' . date('Y-m-d'))
+                        ]),
                 ]),
             ]);
     }
