@@ -15,6 +15,20 @@ class Rent extends Model
         'reserved_until' => 'datetime',
     ];
 
+    protected static function booted()
+    {
+        // Event ini berjalan TEPAT SEBELUM data Rent benar-benar terhapus dari database
+        static::deleting(function ($rent) {
+            // Cek apakah relasi ke data slot tersedia
+            if ($rent->slot) {
+                // Kembalikan status slot menjadi tersedia secara otomatis
+                $rent->slot->update([
+                    'status' => 'available'
+                ]);
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
