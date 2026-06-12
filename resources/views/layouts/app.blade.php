@@ -17,6 +17,7 @@
         <div class="max-w-5xl mx-auto flex justify-between items-center">
             <a href="/dashboard" class="font-bold text-indigo-600 text-xl">BPU Unila</a>
             <div class="flex gap-4 items-center">
+                <a href="/dashboard" class="text-gray-600 hover:text-indigo-600 font-medium">Dashboard</a>
                 <a href="/pilih-lapak" class="text-gray-600 hover:text-indigo-600 font-medium">Pilih Lapak</a>
                 <span class="text-gray-300">|</span>
                 @auth
