@@ -43,6 +43,8 @@ class SlotsTable
                 SelectFilter::make('slot_group_id')
                     ->relationship('slotGroup', 'name')
                     ->label('Saring Berdasarkan Blok'),
+                SelectFilter::make('status')
+                    ->label('Saring Berdasarkan Status'),
             ])
             ->recordActions([
                 EditAction::make(),
