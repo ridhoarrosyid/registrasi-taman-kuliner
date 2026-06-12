@@ -86,11 +86,13 @@ new class extends Component
         $cs = Setting::first();
         $waNumber = $cs ? $cs->whatsapp_number : '6280000000000';
         $rentalPrice = $cs ? $cs->rental_price : 500000;
+        $qrisImage = $cs ? $cs->qris_image : null;
 
         return [
             'rents' => $rents,
             'waNumber' => $waNumber,
-            'rentalPrice' => $rentalPrice // Kirim ke blade
+            'rentalPrice' => $rentalPrice,
+            'qrisImage' => $qrisImage // Kirim ke blade
         ];
     }
 
@@ -255,55 +257,62 @@ new class extends Component
 
         @if($rentIdToPay === $rent->id)
         <div class="bg-gray-50 rounded-2xl border-2 border-indigo-100 p-6 mt-[-10px] shadow-inner mb-6 animate-fade-in">
-            <form wire:submit.prevent="submitPayment" class="items-start flex flex-col md:flex-row gap-6">
+            <form wire:submit.prevent="submitPayment" class="flex flex-col gap-6">
 
-                <div class="flex-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Nominal Transfer (Rp)</label>
-                    <input
-                        type="text"
-                        value="{{ number_format($rentalPrice, 0, ',', '.') }}"
-                        disabled
-                        class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-600 font-bold cursor-not-allowed focus:outline-none select-none">
-                    <p class="text-xs text-gray-500 mt-1 font-medium">*Tarif sewa lapak sudah ditetapkan.</p>
-                </div>
-
-                <div class="flex-1">
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Unggah Bukti Transfer</label>
-                    <input
-                        type="file"
-                        wire:model="paymentProof"
-                        accept="image/*"
-                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-
-                    <div wire:loading wire:target="paymentProof" class="mt-3 text-sm text-indigo-600 font-bold flex items-center gap-2 animate-pulse">
-                        <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Sedang memproses gambar...
-                    </div>
-
-                    @error('paymentProof') <span class="text-red-500 text-sm mt-1 block font-medium">{{ $message }}</span> @enderror
-
-                    <div class="mt-4">
-                        @if ($paymentProof)
-                        <p class="text-xs text-amber-600 font-semibold mb-2 flex items-center gap-1">
-                            <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                            Pratinjau Bukti:
-                        </p>
-                        <img src="{{ $paymentProof->temporaryUrl() }}" class="h-48 object-contain rounded-xl border-2 border-dashed border-indigo-400 p-1.5 bg-gray-50 shadow-sm">
-                        @endif
+                @if($qrisImage)
+                <div class="w-full bg-white border border-gray-200 rounded-xl p-4 text-center shadow-sm">
+                    <p class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Scan QRIS Untuk Membayar</p>
+                    <div class="inline-block p-2 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50">
+                        <img src="{{ Storage::url($qrisImage) }}" alt="QRIS Pembayaran" class="h-[400px] object-contain rounded-lg mx-auto">
                     </div>
                 </div>
+                @endif
 
-                <div class="flex items-end">
-                    <button type="submit"
-                        wire:loading.attr="disabled"
-                        wire:target="paymentProof, submitPayment"
-                        class="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                        <span wire:loading.remove wire:target="submitPayment">Kirim Bukti</span>
-                        <span wire:loading wire:target="submitPayment">Mengirim...</span>
-                    </button>
+                <div class="items-start flex flex-col md:flex-row gap-6">
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Nominal Transfer (Rp)</label>
+                        <input
+                            type="text"
+                            value="{{ number_format($rentalPrice, 0, ',', '.') }}"
+                            disabled
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-100 text-gray-600 font-bold cursor-not-allowed focus:outline-none select-none">
+                        <p class="text-xs text-gray-500 mt-1 font-medium">*Tarif sewa lapak sudah ditetapkan.</p>
+                    </div>
+
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Unggah Bukti Transfer</label>
+                        <input
+                            type="file"
+                            wire:model="paymentProof"
+                            accept="image/*"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-xl bg-white focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+
+                        <div wire:loading wire:target="paymentProof" class="mt-3 text-sm text-indigo-600 font-bold flex items-center gap-2 animate-pulse">
+                            <svg class="animate-spin h-4 w-4 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Sedang memproses gambar...
+                        </div>
+
+                        @error('paymentProof') <span class="text-red-500 text-sm mt-1 block font-medium">{{ $message }}</span> @enderror
+
+                        <div class="mt-4">
+                            @if ($paymentProof)
+                            <img src="{{ $paymentProof->temporaryUrl() }}" class="h-48 object-contain rounded-xl border-2 border-dashed border-indigo-400 p-1.5 bg-gray-50 shadow-sm">
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="paymentProof, submitPayment"
+                            class="w-full md:w-auto bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                            <span wire:loading.remove wire:target="submitPayment">Kirim Bukti</span>
+                            <span wire:loading wire:target="submitPayment">Mengirim...</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

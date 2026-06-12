@@ -9,6 +9,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -44,6 +45,13 @@ class SettingResource extends Resource
                     ->numeric()
                     ->prefix('Rp')
                     ->minValue(0),
+                FileUpload::make('qris_image')
+                    ->label('Gambar QRIS Pembayaran')
+                    ->image()
+                    ->disk('public')
+                    ->directory('qris_images')
+                    ->columnSpanFull()
+                    ->helperText('Unggah gambar QRIS yang valid agar Tenant bisa langsung melakukan scan.'),
             ]);
     }
 

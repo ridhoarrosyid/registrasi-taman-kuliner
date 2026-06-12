@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('whatsapp_number');
             $table->unsignedInteger('rental_price')->default(500000);
+            $table->string('qris_image')->nullable();
             $table->timestamps();
         });
     }
