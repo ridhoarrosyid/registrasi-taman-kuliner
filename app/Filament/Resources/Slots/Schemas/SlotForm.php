@@ -25,7 +25,6 @@ class SlotForm
                         TextInput::make('slot_number')
                             ->label('Nomor / Kode Lapak')
                             ->required()
-                            ->unique(ignoreRecord: true)
                             ->maxLength(255)
                             ->placeholder('Contoh: A1, B2'),
 

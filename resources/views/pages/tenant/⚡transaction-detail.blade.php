@@ -44,7 +44,7 @@ new class extends Component
 
             @if($transaction->status === 'pending')
             <span class="bg-yellow-100 text-yellow-800 px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider border border-yellow-200 shadow-sm">Menunggu Validasi</span>
-            @elseif($transaction->status === 'approved')
+            @elseif($transaction->status === 'success')
             <span class="bg-green-100 text-green-800 px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider border border-green-200 shadow-sm">Pembayaran Diterima</span>
             @else
             <span class="bg-red-100 text-red-800 px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wider border border-red-200 shadow-sm">Pembayaran Ditolak {{$transaction->status}}</span>

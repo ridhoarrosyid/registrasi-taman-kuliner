@@ -44,6 +44,11 @@ class SlotsTable
                     ->relationship('slotGroup', 'name')
                     ->label('Saring Berdasarkan Blok'),
                 SelectFilter::make('status')
+                    ->options([
+                        'available' => 'Tersedia (Available)',
+                        'reserved' => 'Dipesan / Menunggu Bayar (Reserved)',
+                        'occupied' => 'Disewa Aktif (Occupied)',
+                    ])
                     ->label('Saring Berdasarkan Status'),
             ])
             ->recordActions([
