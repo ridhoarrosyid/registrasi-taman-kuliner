@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -28,6 +29,8 @@ class SettingResource extends Resource
     protected static ?string $navigationLabel = 'Pengaturan';
 
     protected static ?string $modelLabel = 'Pengaturan';
+
+    protected static ?string $pluralModelLabel = 'Pengaturan';
 
     public static function form(Schema $schema): Schema
     {
@@ -60,6 +63,11 @@ class SettingResource extends Resource
         return $table
             ->recordTitleAttribute('Pengaturan')
             ->columns([
+                ImageColumn::make('qris_image')
+                    ->label('QRIS Pembayaran')
+                    ->disk('public')
+                    ->size(150) // Memperbesar ukuran gambar di tabel (opsional)
+                    ->square(),
                 TextColumn::make('whatsapp_number')
                     ->label('Nomor WhatsApp Admin BPU')
                     ->searchable(),
