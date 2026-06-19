@@ -15,6 +15,7 @@ new class extends Component
     public $ktp_number;
     public $ktp_image; // Untuk menampung file unggahan baru sementara
     public $existing_ktp_image; // Untuk memuat pratinjau gambar dari database
+    public $phone_number;
 
     public function mount()
     {
@@ -33,6 +34,7 @@ new class extends Component
             'name' => 'required|min:3|max:255',
             'ktp_number' => 'required|numeric|digits:16|unique:users,ktp_number,' . $user->id,
             'ktp_image' => 'nullable|image|max:2048', // Batas ukuran berkas foto maksimal 2MB
+            'phone_number' => 'required|numeric|digits_between:10,14',
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
             'ktp_number.required' => 'Nomor NIK wajib diisi.',
@@ -41,11 +43,20 @@ new class extends Component
             'ktp_number.unique' => 'Nomor NIK ini sudah terdaftar pada akun lain.',
             'ktp_image.image' => 'Berkas identitas wajib berupa dokumen gambar.',
             'ktp_image.max' => 'Ukuran gambar dokumen tidak boleh melebihi 2MB.',
+            'phone_number.required' => 'Nomor WhatsApp wajib diisi.',
+            'phone_number.numeric' => 'Nomor WhatsApp harus berupa angka.',
+            'phone_number.digits_between' => 'Nomor WhatsApp tidak valid (panjang harus 10-14 karakter).',
         ]);
+
+        $nomor = $this->phone_number;
+        if (str_starts_with($nomor, '0')) {
+            $nomor = '62' . substr($nomor, 1);
+        }
 
         $payload = [
             'name' => $this->name,
             'ktp_number' => $this->ktp_number,
+            'phone_number' => $nomor
         ];
 
         // Jika user mengunggah berkas foto KTP baru
@@ -78,10 +89,15 @@ new class extends Component
 ?>
 
 <div class="bg-gray-50 min-h-screen pb-12">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        @if (session()->has('error'))
+        <div class="mb-6 p-4 bg-red-100 border border-red-200 text-red-800 rounded-xl font-semibold shadow-sm">
+            {{ session('error') }}
+        </div>
+        @endif
         <div class="mb-8">
             <h1 class="text-3xl font-black text-gray-900">Verifikasi Identitas</h1>
-            <p class="text-gray-500 mt-2">Lengkapi dokumen NIK dan berkas KTP fisik Anda untuk validasi data penyewaan tempat.</p>
+            <p class="text-gray-500 mt-2">Lengkapi No WA, NIK dan berkas KTP fisik Anda untuk validasi data penyewaan tempat.</p>
         </div>
 
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
@@ -103,6 +119,12 @@ new class extends Component
                     <label class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
                     <input type="text" wire:model="name" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-none transition-shadow">
                     @error('name') <span class="text-red-500 text-sm mt-1 block font-medium">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">No Whatsapp (mulai dari 628)</label>
+                    <input type="text" placeholder="6281234567890" wire:model="phone_number" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:outline-none transition-shadow">
+                    @error('phone_number') <span class="text-red-500 text-sm mt-1 block font-medium">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
