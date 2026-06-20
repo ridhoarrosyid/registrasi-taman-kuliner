@@ -69,7 +69,7 @@ new class extends Component
         $user = Auth::user();
         if ($user->role === 'tenant' && (empty($user->phone_number) || empty($user->ktp_number) || empty($user->ktp_image))) {
             // Berikan pesan kilat
-            session()->flash('error', 'Anda wajib melengkapi Nomor WhatsApp terlebih dahulu sebelum dapat memilih lapak.');
+            session()->flash('error', 'Anda wajib melengkapi Nomor WhatsApp, NIK, dan foto ktp terlebih dahulu sebelum dapat memilih lapak.');
 
             // Alihkan langsung ke halaman profil
             return $this->redirect(route('profile'), navigate: true);
