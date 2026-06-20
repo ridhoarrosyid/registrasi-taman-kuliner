@@ -6,6 +6,7 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -38,7 +39,8 @@ class UserForm
                     ->schema([
                         TextInput::make('ktp_number')->label('Nomor KTP')->maxLength(16),
                         TextInput::make('phone_number')->label('Nomor HP')->maxLength(14)->minLength(10)->startsWith('628'),
-                        FileUpload::make('ktp_image')->label('Foto KTP')->image()->directory('ktp-images'),
+                        FileUpload::make('ktp_image')->label('Foto KTP')->image()->disk('public')->directory('ktp-images'),
+                        ImageEntry::make('ktp_image')->label('Foto KTP Sekarang')->disk('public')->visibility('public')->height(300)->columnSpanFull()
                     ])->columns(2)->columnSpanFull(),
             ]);
     }
