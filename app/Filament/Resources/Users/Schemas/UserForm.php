@@ -37,6 +37,7 @@ class UserForm
                 Section::make('Data Identitas')
                     ->schema([
                         TextInput::make('ktp_number')->label('Nomor KTP')->maxLength(16),
+                        TextInput::make('phone_number')->label('Nomor HP')->maxLength(14)->minLength(10)->startsWith('628'),
                         FileUpload::make('ktp_image')->label('Foto KTP')->image()->directory('ktp-images'),
                     ])->columns(2)->columnSpanFull(),
             ]);
